@@ -1,4 +1,4 @@
-typeorm.config.ts
+#typeorm.config.ts
 
 # compiled output
 /dist

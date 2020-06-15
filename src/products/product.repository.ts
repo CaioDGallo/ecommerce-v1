@@ -26,6 +26,10 @@ export class ProductRepository extends Repository<Product>{
         product.description = description;
         product.status = ProductStatus.AVAILABLE;
         product.price = price;
+        let imagePath = title.trim();
+        imagePath = imagePath.replace(/ /g,'');
+        imagePath = imagePath.normalize('NFD').replace(/[\u0300-\u036f]/g, "");
+        product.imagePath = imagePath.toLowerCase();
 
         try{
             await product.save();

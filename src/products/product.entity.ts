@@ -18,4 +18,7 @@ export class Product extends BaseEntity{
 
     @Column()
     price: number;
+
+    @Column()
+    imagePath: string;
 }
