@@ -1,11 +1,11 @@
-import { BaseEntity, Entity, PrimaryGeneratedColumn, Column, Unique } from "typeorm";
+import { BaseEntity, Entity, Column, Unique, ObjectIdColumn } from "typeorm";
 import * as bcrypt from 'bcrypt';
 
 @Entity()
 @Unique(['username'])
 export class User extends BaseEntity{
-    @PrimaryGeneratedColumn()
-    id: number;
+    @ObjectIdColumn()
+    _id: string;
 
     @Column()
     username: string;
