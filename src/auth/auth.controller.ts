@@ -18,11 +18,11 @@ export class AuthController {
         const tokens = await this.authService.signIn(authCredentialsDto);
         if(tokens.accessToken != null && tokens.accessToken != ""){
             res.append('Set-Cookie', `refresh_token=${tokens.refreshToken};expires=${this.getExpiresText()}; HttpOnly`);
-            const authObj: AuthAccessTokenDto = { accessToken: tokens.accessToken, success: true }
+            const authObj: AuthAccessTokenDto = { accessToken: tokens.accessToken, success: true, username: tokens.user.username, _id: tokens.user._id }
             
             return res.json(authObj);
         }else{
-            const authObj: AuthAccessTokenDto = { accessToken: "", success: false }
+            const authObj: AuthAccessTokenDto = { accessToken: "", success: false, username: tokens.user.username, _id: tokens.user._id }
             
             return res.json(authObj);
         }
@@ -35,16 +35,23 @@ export class AuthController {
             const newTokens = await this.authService.refreshToken(req.headers.cookie.split("refresh_token=").pop());
             if(newTokens.accessToken != null && newTokens.accessToken != ""){
                 res.append('Set-Cookie', `refresh_token=${newTokens.refreshToken};expires=${this.getExpiresText()}; HttpOnly`);
-                const authObj: AuthAccessTokenDto = { accessToken: newTokens.accessToken, success: true }
+                const authObj: AuthAccessTokenDto = { accessToken: newTokens.accessToken, success: true, username: newTokens.user.username, _id: newTokens.user._id }
                 
                 return res.json(authObj);
             }else{
-                const authObj: AuthAccessTokenDto = { accessToken: "", success: false }
+                const authObj: AuthAccessTokenDto = { accessToken: "", success: false, username: newTokens.user.username, _id: newTokens.user._id }
                 
                 return res.json(authObj);
             }
         }
         return res.json({ error: "Invalid Refresh Token", success: false });
+    }
+
+    @Post('/logout')
+    logout(@Req() req: Request): void{
+        if(req.headers.cookie != null){
+            this.authService.logout(req.headers.cookie.split("refresh_token=").pop()); 
+        }
     }
 
     getExpiresText(): string{

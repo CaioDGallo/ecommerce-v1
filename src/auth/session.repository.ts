@@ -12,6 +12,7 @@ export class SessionRepository extends Repository<Session>{
         session.refreshToken = refreshToken;
 
         try{
+            await this.delete({ userId });
             await session.save();
         }catch(error){
             this.logger.error(`Failed to create session. Data: ${userId}`, error.stack);
