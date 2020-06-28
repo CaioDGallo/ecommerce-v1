@@ -6,10 +6,12 @@ import { UserRepository } from './user.repository';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
 import { JwtStrategy } from './jwt.strategy';
+import { SessionRepository } from './session.repository';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([UserRepository]),
+    TypeOrmModule.forFeature([SessionRepository]),
     JwtModule.register({
       secret: 'topSecret51',
       signOptions: {

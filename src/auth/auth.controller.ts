@@ -1,6 +1,8 @@
-import { Controller, Post, Body, ValidationPipe } from '@nestjs/common';
+import { Controller, Post, Body, ValidationPipe, Res, Req } from '@nestjs/common';
 import { AuthCredentialsDto } from './dto/auth-credentials.dto';
+import { AuthAccessTokenDto } from './dto/auth-accesstoken.dto';
 import { AuthService } from './auth.service';
+import { Response, Request } from 'express';
 
 @Controller('auth')
 export class AuthController {
@@ -12,7 +14,50 @@ export class AuthController {
     }
 
     @Post('/signin')
-    signIn(@Body(ValidationPipe) authCredentialsDto:AuthCredentialsDto): Promise<{ accessToken: string }>{
-        return this.authService.signIn(authCredentialsDto);
+    async signIn(@Res() res: Response, @Body(ValidationPipe) authCredentialsDto:AuthCredentialsDto): Promise<Response<AuthAccessTokenDto>>{
+        const tokens = await this.authService.signIn(authCredentialsDto);
+        if(tokens.accessToken != null && tokens.accessToken != ""){
+            res.append('Set-Cookie', `refresh_token=${tokens.refreshToken};expires=${this.getExpiresText()}; HttpOnly`);
+            const authObj: AuthAccessTokenDto = { accessToken: tokens.accessToken, success: true, username: tokens.user.username, _id: tokens.user._id }
+            
+            return res.json(authObj);
+        }else{
+            const authObj: AuthAccessTokenDto = { accessToken: "", success: false, username: tokens.user.username, _id: tokens.user._id }
+            
+            return res.json(authObj);
+        }
+    }
+
+    @Post('/refreshToken')
+    async refreshToken(@Req() req: Request, @Res() res: Response): Promise<Response<AuthAccessTokenDto>>{
+        //console.log(req.headers.cookie)
+        if(req.headers.cookie != null){
+            const newTokens = await this.authService.refreshToken(req.headers.cookie.split("refresh_token=").pop());
+            if(newTokens.accessToken != null && newTokens.accessToken != ""){
+                res.append('Set-Cookie', `refresh_token=${newTokens.refreshToken};expires=${this.getExpiresText()}; HttpOnly`);
+                const authObj: AuthAccessTokenDto = { accessToken: newTokens.accessToken, success: true, username: newTokens.user.username, _id: newTokens.user._id }
+                
+                return res.json(authObj);
+            }else{
+                const authObj: AuthAccessTokenDto = { accessToken: "", success: false, username: newTokens.user.username, _id: newTokens.user._id }
+                
+                return res.json(authObj);
+            }
+        }
+        return res.json({ error: "Invalid Refresh Token", success: false });
+    }
+
+    @Post('/logout')
+    logout(@Req() req: Request): void{
+        if(req.headers.cookie != null){
+            this.authService.logout(req.headers.cookie.split("refresh_token=").pop()); 
+        }
+    }
+
+    getExpiresText(): string{
+        const now = new Date();
+        const minutes = 15;
+        now.setTime(now.getTime() + (minutes * 60 * 1000));
+        return now.toUTCString();
     }
 }
